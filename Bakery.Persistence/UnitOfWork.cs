@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Bakery.Core.Contracts;
 using Bakery.Core.Entities;
+using System.Collections.Generic;
 
 namespace Bakery.Persistence
 {
-  public class UnitOfWork : IUnitOfWork
+    public class UnitOfWork : IUnitOfWork
     {
         private readonly ApplicationDbContext _dbContext;
         private bool _disposed;
@@ -55,7 +56,18 @@ namespace Bakery.Persistence
         /// <param name="entity"></param>
         private async Task ValidateEntity(object entity)
         {
-         
+            if (entity is Product product)
+            {
+                bool productInDb = await _dbContext.Products
+                    .AnyAsync(p => p.Id != product.Id &&
+                    p.ProductNr.ToLower()
+                    .Equals(product.ProductNr.ToLower()));
+
+                if (productInDb)
+                {
+                    throw new ValidationException($"Die Produktnummer {product.ProductNr} gibt es bereits");
+                }
+            }
         }
 
         public async Task DeleteDatabaseAsync() => await _dbContext.Database.EnsureDeletedAsync();

@@ -30,14 +30,17 @@ namespace Bakery.ImportConsole
             await unitOfWork.MigrateDatabaseAsync();
 
             Console.WriteLine("Daten werden von csv-Dateien eingelesen");
-            var products = ImportController.ReadFromCsv();
+            var inputTuple = ImportController.ReadFromCsv();
+            var products = inputTuple.Item2;
+            var orders = inputTuple.Item1;
             Console.WriteLine($"  {products.Count()} Produkte eingelesen");
 
             await unitOfWork.Products.AddRangeAsync(products);
 
             Console.WriteLine("Produkte werden in Datenbank gespeichert (persistiert)");
             await unitOfWork.SaveChangesAsync();
-
+            await unitOfWork.Orders.AddRangeAsync(orders);
+            await unitOfWork.SaveChangesAsync();
 
             var cntProducts = await unitOfWork.Products.GetCountAsync();
             var cntCustomers = await unitOfWork.Customers.GetCountAsync();
